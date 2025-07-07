@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<!-- Define que o documento é HTML5 -->
+<html lang="pt-BR">
+<!-- Define o idioma da página como português do Brasil -->
+<head>
+    <meta charset="UTF-8">
+    <!-- Define a codificação de caracteres para UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Garante que o site seja responsivo em dispositivos móveis -->
+    <title>Catch the Stars ⭐</title>
+    <!-- Título que aparece na aba do navegador -->
+
+    <style>
+        /* RESET CSS - remove margens/paddings padrões e define box-sizing */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Estilo do body da página */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: crosshair; /* Muda o cursor para estilo 'alvo' */
+        }
+
+        /* Container principal do jogo */
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Cabeçalho do jogo (pontuação, tempo, combo) */
+        .game-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .score {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .time {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+
+        /* Estilo das estrelas que caem */
+        .star {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e); /* Degradê amarelo */
+            clip-path: polygon(...); /* Forma de estrela */
+            cursor: pointer;
+            animation: sparkle 1s ease-in-out infinite alternate, fall 3s linear forwards;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            transition: transform 0.1s ease;
+        }
+
+        /* Efeito ao passar o mouse na estrela */
+        .star:hover {
+            transform: scale(1.2);
+            animation-play-state: paused;
+        }
+
+        /* Classe para efeito de explosão quando pega a estrela */
+        .star-pop {
+            animation: pop 0.3s ease-out forwards;
+        }
+
+        /* Tela de fim de jogo */
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1001;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .game-over h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+
+        .final-score {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Instruções fixadas no rodapé */
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Texto de combo */
+        .combo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffd700;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 999;
+        }
+
+        /* Mostra o combo com animação */
+        .combo.show {
+            animation: comboShow 1s ease-out forwards;
+        }
+
+        /* Animação de brilho da estrela */
+        @keyframes sparkle {
+            0% {
+                filter: brightness(1) drop-shadow(0 0 5px #ffd700);
+            }
+            100% {
+                filter: brightness(1.3) drop-shadow(0 0 15px #ffd700);
+            }
+        }
+
+        /* Animação de queda da estrela */
+        @keyframes fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(800px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Animação ao clicar na estrela (pop) */
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.5);
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Animação do combo aparecendo e sumindo */
+        @keyframes comboShow {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Área principal do jogo -->
+    <div class="game-container">
+        <!-- Cabeçalho com score, tempo e combo -->
+        <div class="game-header">
+            <div class="score">Pontuação: <span id="score">0</span></div>
+            <div class="time">Tempo: <span id="time">60</span>s</div>
+            <div>Combo: <span id="combo">0</span>x</div>
+        </div>
+
+        <!-- Instrução para o jogador -->
+        <div class="instructions">
+            Clique nas estrelas antes que elas desapareçam! ⭐
+        </div>
+
+        <!-- Exibição de combo -->
+        <div class="combo" id="comboDisplay"></div>
+
+        <!-- Tela de fim de jogo -->
+        <div class="game-over" id="gameOver">
+            <h2>Fim de Jogo! 🌟</h2>
+            <div class="final-score">Pontuação Final: <span id="finalScore">0</span></div>
+            <button class="restart-btn" onclick="startGame()">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis principais
+        var score = 0;
+        var timeLeft = 60;
+        var gameActive = true;
+        var starInterval;
+        var gameTimer;
+        var combo = 0;
+        var comboTimer;
+
+        // Pegando os elementos HTML
+        var scoreElement = document.getElementById('score');
+        var timeElement = document.getElementById('time');
+        var comboElement = document.getElementById('combo');
+        var gameOverElement = document.getElementById('gameOver');
+        var finalScoreElement = document.getElementById('finalScore');
+        var comboDisplayElement = document.getElementById('comboDisplay');
+        var gameContainer = document.querySelector('.game-container');
+
+        // Cria uma estrela nova
+        function createStar() {
+            if (!gameActive) return;
+
+            var star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * (window.innerWidth - 40) + 'px'; // posição aleatória
+            star.style.animationDuration = (Math.random() * 2 + 2) + 's'; // duração aleatória
+
+            star.addEventListener('click', catchStar); // adiciona evento de clique
+            gameContainer.appendChild(star);
+
+            // Remove a estrela após 4 segundos se não for clicada
+            setTimeout(function () {
+                if (star.parentNode) {
+                    star.remove();
+                    resetCombo();
+                }
+            }, 4000);
+        }
+
+        // Quando o jogador clica na estrela
+        function catchStar(e) {
+            if (!gameActive) return;
+
+            e.preventDefault();
+            var star = e.target;
+
+            combo++;
+            var points = 10;
+
+            if (combo >= 5) {
+                points = 50;
+                showCombo('COMBO x' + combo + '!');
+            } else if (combo >= 3) {
+                points = 25;
+            }
+
+            score += points;
+            scoreElement.textContent = score;
+            comboElement.textContent = combo;
+
+            star.classList.add('star-pop');
+
+            clearTimeout(comboTimer); // reinicia o tempo de combo
+            comboTimer = setTimeout(resetCombo, 2000);
+
+            setTimeout(function () {
+                star.remove();
+            }, 300);
+        }
+
+        // Zera o combo
+        function resetCombo() {
+            combo = 0;
+            comboElement.textContent = combo;
+        }
+
+        // Mostra o texto do combo animado
+        function showCombo(text) {
+            comboDisplayElement.textContent = text;
+            comboDisplayElement.classList.add('show');
+
+            setTimeout(function () {
+                comboDisplayElement.classList.remove('show');
+            }, 1000);
+        }
+
+        // Atualiza o tempo do jogo
+        function updateTimer() {
+            timeLeft--;
+            timeElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        // Termina o jogo
+        function endGame() {
+            gameActive = false;
+            clearInterval(starInterval);
+            clearInterval(gameTimer);
+            clearTimeout(comboTimer);
+
+            // Remove todas as estrelas
+            var stars = document.querySelectorAll('.star');
+            for (var i = 0; i < stars.length; i++) {
+                stars[i].remove();
+            }
+
+            finalScoreElement.textContent = score;
+            gameOverElement.style.display = 'block';
+        }
+
+        // Inicia ou reinicia o jogo
+        function startGame() {
+            score = 0;
+            timeLeft = 60;
+            combo = 0;
+            gameActive = true;
+
+            scoreElement.textContent = score;
+            timeElement.textContent = timeLeft;
+            comboElement.textContent = combo;
+            gameOverElement.style.display = 'none';
+
+            // Remove estrelas antigas
+            var stars = document.querySelectorAll('.star');
+            for (var i = 0; i < stars.length; i++) {
+                stars[i].remove();
+            }
+
+            // Começa a gerar estrelas e a contagem do tempo
+            starInterval = setInterval(createStar, 800);
+            gameTimer = setInterval(updateTimer, 1000);
+        }
+
+        // Inicia o jogo assim que a página carrega
+        document.addEventListener('DOMContentLoaded', function () {
+            startGame();
+        });
+
+        // Impede o clique com o botão direito do mouse
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
+    <!-- Tela de fim de jogo -->
+<div class="game-over" id="gameOver">
+    <h2>Fim de Jogo! 🌟</h2>
+    <div class="final-score">Pontuação Final: <span id="finalScore">0</span></div>
+    <button class="restart-btn" onclick="startGame()">Jogar Novamente</button>
+
+    <!-- Formulário de Feedback -->
+    <form id="feedbackForm" class="feedback" style="margin-top: 20px; text-align: left;">
+        <p><strong>Qual o seu nome?</strong></p>
+        <input type="text" placeholder="João da Silva" id="nameInput" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: none;">
+
+        <p><strong>Entre os três emotes, qual representa mais a sua sensação com o jogo?</strong></p>
+        <div class="emotes" style="margin-bottom: 10px;">
+            <input type="radio" name="emoji" value="BOM" id="emoji1" class="emoji-input">
+            <label for="emoji1">😀</label>
+            <input type="radio" name="emoji" value="MEDIO" id="emoji2" class="emoji-input">
+            <label for="emoji2">😐</label>
+            <input type="radio" name="emoji" value="RUIM" id="emoji3" class="emoji-input">
+            <label for="emoji3">😡</label>
+        </div>
+
+        <p><strong>Deixe sua crítica ou sugestão (opcional):</strong></p>
+        <input type="text" id="commentInput" placeholder="Achei legal e bacana." style="width: 100%; padding: 8px; border-radius: 8px; border: none; margin-bottom: 10px;">
+
+        <button type="submit" style="width: 100%; padding: 10px; border-radius: 10px; border: none; background: #ffeb3b; color: black; font-weight: bold;">Enviar</button>
+    </form>
+</div>
+
+</body>
+</html>
